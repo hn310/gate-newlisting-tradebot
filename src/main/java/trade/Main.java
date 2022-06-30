@@ -17,14 +17,16 @@ public class Main {
 //        spotTrade.printUpcomingListing();
 
         // ****** WARNING: comment out this method after every run ******
-        startTrade(spotTrade);
+        String currencyPair = args[0];
+        startTrade(spotTrade, currencyPair);
     }
     
-    private static void startTrade(SpotTrade spotTrade) throws ApiException, InterruptedException {
+    private static void startTrade(SpotTrade spotTrade, String currencyPair) throws ApiException, InterruptedException {
+        logger.info("-------------------------------------------------------------");
+        logger.info("Start startTrade()");
         // define trade pair
-        String currencyPair = "ZTG_USDT";
         logger.info("trade pair: " + currencyPair);
-        String quoteCurrency = currencyPair.split("_")[0]; // get quote currency
+        String baseCurrency = currencyPair.split("_")[0]; // get base currency ETH/USDT -> base: ETH, quote: USDT
         double totalFundInUsdt = 50.0;
 
         int amountPrecision = spotTrade.getAmountPrecision(currencyPair);
@@ -34,12 +36,13 @@ public class Main {
 
         // Đợi đến trước khi mở bán tầm 5s để biết giá ask thấp nhất
         long currentUnixTimestamp = Instant.now().getEpochSecond();
-//        while (!spotTrade.isNearBuyTime(currentUnixTimestamp, currencyPair)) {
-//            Thread.sleep(4500); // sleep 4.5s
-//            currentUnixTimestamp = Instant.now().getEpochSecond();
-//        }
+        while (!spotTrade.isNearBuyTime(currentUnixTimestamp, currencyPair)) {
+            Thread.sleep(4500); // sleep 4.5s
+            currentUnixTimestamp = Instant.now().getEpochSecond();
+        }
 
         // It's buy time !!!
+        logger.info("It's buy time !!!");
         // bon chen thử đặt lệnh với giá thấp nhất, rồi sau đó lũy tiến dần
         double lowestAsk = spotTrade.getLowestAsk(currencyPair);
         logger.info("lowest ask: " + lowestAsk);
@@ -52,24 +55,26 @@ public class Main {
 
         // Nếu mở bán thì status sẽ là tradable
         boolean isTradable = TradeStatusEnum.TRADABLE.equals(spotTrade.getTradeStatus(currencyPair));
-//        while (!isTradable) {
-//            Thread.sleep(1); // max 900 requests/seconds -> retry every 1000ms/900 requests = 1ms
-//            isTradable = TradeStatusEnum.TRADABLE.equals(spotTrade.getTradeStatus(currencyPair));
-//        }
+        while (!isTradable) {
+            Thread.sleep(1); // max 900 requests/seconds -> retry every 1000ms/900 requests = 1ms
+            isTradable = TradeStatusEnum.TRADABLE.equals(spotTrade.getTradeStatus(currencyPair));
+        }
 
         // Thực hiện mua khi mở bán
         spotTrade.createBulkBuyOrder(currencyPair, buyAmounts, buyPrices);
 
         // check số lượng token nếu > 0 sẽ sell = x3,5,7,9 giá lowestAsk
-        double availableQuoteCurrency = spotTrade.getAvailableAmount(quoteCurrency);
-//        while (availableQuoteCurrency == 0) {
-//            // sleep vài ms để đợi khớp lệnh
-//            Thread.sleep(1);
-//            availableQuoteCurrency = spotTrade.getAvailableAmount(quoteCurrency);
-//        }
-        List<String> sellAmounts = spotTrade.createSellAmounts(availableQuoteCurrency, sellPrices,
+        double availableBaseCurrency = spotTrade.getAvailableAmount(baseCurrency);
+        while (availableBaseCurrency == 0) {
+            // sleep vài ms để đợi khớp lệnh
+            Thread.sleep(1);
+            availableBaseCurrency = spotTrade.getAvailableAmount(baseCurrency);
+        }
+        List<String> sellAmounts = spotTrade.createSellAmounts(availableBaseCurrency, sellPrices,
                 amountPrecisionFormat);
         spotTrade.createBulkSellOrder(currencyPair, sellAmounts, sellPrices);
+        logger.info("sellAmounts: " + String.join(", ", sellAmounts));
         logger.info("Finish startTrade()");
+        System.exit(0);
     }
 }

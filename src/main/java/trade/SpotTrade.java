@@ -6,9 +6,13 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import io.gate.gateapi.ApiClient;
 import io.gate.gateapi.ApiException;
 import io.gate.gateapi.api.SpotApi;
+import io.gate.gateapi.models.BatchOrder;
 import io.gate.gateapi.models.CurrencyPair;
 import io.gate.gateapi.models.CurrencyPair.TradeStatusEnum;
 import io.gate.gateapi.models.Order;
@@ -16,6 +20,8 @@ import io.gate.gateapi.models.SpotAccount;
 import io.gate.gateapi.models.Ticker;
 
 class SpotTrade {
+    private static final Logger logger = LogManager.getLogger(SpotTrade.class);
+
     private SpotApi spotApi;
     private int buyIntervalNumber = 5; // divide fund into n equal orders
     private int sellIntervalNumber = 4; // x3, x5, x7, x9
@@ -30,8 +36,10 @@ class SpotTrade {
     public void printUpcomingListing() throws ApiException {
         List<CurrencyPair> cps = spotApi.listCurrencyPairs();
         for (CurrencyPair cp : cps) {
-            if (cp.getTradeStatus().equals(TradeStatusEnum.BUYABLE) || cp.getTradeStatus().equals(TradeStatusEnum.SELLABLE)) {
-                ZonedDateTime buyStartTime = Instant.ofEpochMilli(cp.getBuyStart()*1000).atZone(ZoneId.of("Asia/Bangkok"));
+            if (cp.getTradeStatus().equals(TradeStatusEnum.BUYABLE)
+                    || cp.getTradeStatus().equals(TradeStatusEnum.SELLABLE)) {
+                ZonedDateTime buyStartTime = Instant.ofEpochMilli(cp.getBuyStart() * 1000)
+                        .atZone(ZoneId.of("Asia/Bangkok"));
                 System.out.println(cp.getBase() + "_" + cp.getQuote() + ". Status: " + cp.getTradeStatus());
                 System.out.println("Buy Start Time: " + buyStartTime);
                 System.out.println();
@@ -102,7 +110,17 @@ class SpotTrade {
             order.setCurrencyPair(currencyPair);
             orders.add(order);
         }
-        this.spotApi.createBatchOrders(orders);
+        List<BatchOrder> batchOrders = this.spotApi.createBatchOrders(orders);
+        for (BatchOrder bo : batchOrders) {
+            logger.info("side: " + bo.getSide() + 
+                    ", text: " + bo.getText() + 
+                    ", succeeded: " + bo.getSucceeded() + 
+                    ", label: " + bo.getLabel() + 
+                    ", message: " + bo.getMessage() + 
+                    ", create_time_ms: " + bo.getCreateTimeMs() + 
+                    ", amount: " + bo.getAmount() + ", price: " + bo.getPrice() + 
+                    ", filled total: " + bo.getFilledTotal());
+        }
     }
 
     public void createBulkBuyOrder(String currencyPair, List<String> buyAmounts, List<String> buyPrices)
@@ -122,7 +140,17 @@ class SpotTrade {
             order.setCurrencyPair(currencyPair);
             orders.add(order);
         }
-        this.spotApi.createBatchOrders(orders);
+        List<BatchOrder> batchOrders = this.spotApi.createBatchOrders(orders);
+        for (BatchOrder bo : batchOrders) {
+            logger.info("side: " + bo.getSide() + 
+                    ", text: " + bo.getText() + 
+                    ", succeeded: " + bo.getSucceeded() + 
+                    ", label: " + bo.getLabel() + 
+                    ", message: " + bo.getMessage() + 
+                    ", create_time_ms: " + bo.getCreateTimeMs() + 
+                    ", amount: " + bo.getAmount() + ", price: " + bo.getPrice() + 
+                    ", filled total: " + bo.getFilledTotal());
+        }
     }
 
     public List<String> createBuyPrices(double lowestAsk, String pricePrecisionFormat) {
@@ -130,7 +158,7 @@ class SpotTrade {
         List<String> buyPrices = new ArrayList<String>();
         for (int i = 0; i < this.buyIntervalNumber; i++) {
             buyPrices.add(String.format(pricePrecisionFormat, lowestAsk * multiplier));
-            multiplier += 0.3; // 1.0 ~ 3.0
+            multiplier += 0.3;
         }
         return buyPrices;
     }
@@ -154,9 +182,9 @@ class SpotTrade {
         return sellPrices;
     }
 
-    public List<String> createSellAmounts(double availableQuoteCurrency, List<String> sellPrices,
+    public List<String> createSellAmounts(double availableBaseCurrency, List<String> sellPrices,
             String amountPrecisionFormat) {
-        double tradeAmount = availableQuoteCurrency / this.sellIntervalNumber;
+        double tradeAmount = availableBaseCurrency / this.sellIntervalNumber;
         List<String> sellAmounts = new ArrayList<String>();
         for (int i = 0; i < this.sellIntervalNumber; i++) {
             sellAmounts.add(String.format(amountPrecisionFormat, tradeAmount / Double.parseDouble(sellPrices.get(i))));
@@ -184,8 +212,8 @@ class SpotTrade {
         return this.spotApi.getCurrencyPair(currencyPair).getPrecision();
     }
 
-    public double getAvailableAmount(String quoteCurrency) throws ApiException {
-        List<SpotAccount> accounts = spotApi.listSpotAccounts().currency(quoteCurrency).execute();
+    public double getAvailableAmount(String baseCurrency) throws ApiException {
+        List<SpotAccount> accounts = spotApi.listSpotAccounts().currency(baseCurrency).execute();
         return Double.parseDouble(accounts.get(0).getAvailable());
     }
 }
