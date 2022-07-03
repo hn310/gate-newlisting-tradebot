@@ -27,7 +27,7 @@ public class Main {
         // define trade pair
         logger.info("trade pair: " + currencyPair);
         String baseCurrency = currencyPair.split("_")[0]; // get base currency ETH/USDT -> base: ETH, quote: USDT
-        double totalFundInUsdt = 50.0;
+        double totalFundInUsdt = 20.0;
 
         int amountPrecision = spotTrade.getAmountPrecision(currencyPair);
         String amountPrecisionFormat = "%." + amountPrecision + "f";
