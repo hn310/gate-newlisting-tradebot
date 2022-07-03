@@ -23,13 +23,16 @@ class SpotTrade {
     private static final Logger logger = LogManager.getLogger(SpotTrade.class);
 
     private SpotApi spotApi;
-    private int buyIntervalNumber = 5; // divide fund into n equal orders
-    private int sellIntervalNumber = 4; // x3, x5, x7, x9
+    private int buyIntervalNumber = 2; // divide fund into n equal orders
+    private double buyMultiplier = 0.5;
+    private int sellIntervalNumber = 2; // x3, x5
+    private double sellMultiplier = 2;
 
     public SpotTrade() {
         // Initialize API client
         ApiClient client = new ApiClient();
         client.setApiKeySecret(Config.API_KEY, Config.API_SECRET);
+        client.setBasePath("https://52.198.110.169/api/v4");
         this.spotApi = new SpotApi(client);
     }
 
@@ -46,6 +49,7 @@ class SpotTrade {
             }
         }
         System.out.println("Finish printUpcomingListing()!!");
+        System.exit(0);
     }
 
     public double getLow24h(String currencyPair) throws ApiException {
@@ -110,6 +114,7 @@ class SpotTrade {
             order.setCurrencyPair(currencyPair);
             orders.add(order);
         }
+        logger.info("current time before creating bulk sell requests: " + currentUnixTimestamp);
         List<BatchOrder> batchOrders = this.spotApi.createBatchOrders(orders);
         for (BatchOrder bo : batchOrders) {
             logger.info("side: " + bo.getSide() + 
@@ -140,6 +145,7 @@ class SpotTrade {
             order.setCurrencyPair(currencyPair);
             orders.add(order);
         }
+        logger.info("current time before creating bulk buy requests: " + currentUnixTimestamp);
         List<BatchOrder> batchOrders = this.spotApi.createBatchOrders(orders);
         for (BatchOrder bo : batchOrders) {
             logger.info("side: " + bo.getSide() + 
@@ -154,11 +160,11 @@ class SpotTrade {
     }
 
     public List<String> createBuyPrices(double lowestAsk, String pricePrecisionFormat) {
-        double multiplier = 1.0;
+        double multiplier = 1.5;
         List<String> buyPrices = new ArrayList<String>();
         for (int i = 0; i < this.buyIntervalNumber; i++) {
             buyPrices.add(String.format(pricePrecisionFormat, lowestAsk * multiplier));
-            multiplier += 0.3;
+            multiplier += this.buyMultiplier;
         }
         return buyPrices;
     }
@@ -177,7 +183,7 @@ class SpotTrade {
         List<String> sellPrices = new ArrayList<String>();
         for (int i = 0; i < this.sellIntervalNumber; i++) {
             sellPrices.add(String.format(pricePrecisionFormat, lowestAsk * multiplier));
-            multiplier += 2; // x3, x5, x7, x9
+            multiplier += this.sellMultiplier;
         }
         return sellPrices;
     }
@@ -199,7 +205,7 @@ class SpotTrade {
 
     public boolean isNearBuyTime(long currentUnixTimestamp, String currencyPair) throws ApiException {
         long tokenBuyStartTime = getBuyStartTime(currencyPair);
-        boolean isJustBeforeBuyStartTime = currentUnixTimestamp > (tokenBuyStartTime - 10); // 10s before buy start time
+        boolean isJustBeforeBuyStartTime = currentUnixTimestamp > (tokenBuyStartTime - 5); // 5s before buy start time
         boolean isAfterStartBuyTime = currentUnixTimestamp < (tokenBuyStartTime + 60); // < 60s after buy start time
         return isJustBeforeBuyStartTime && isAfterStartBuyTime;
     }

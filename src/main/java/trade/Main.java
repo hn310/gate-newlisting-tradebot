@@ -37,7 +37,7 @@ public class Main {
         // Đợi đến trước khi mở bán tầm 5s để biết giá ask thấp nhất
         long currentUnixTimestamp = Instant.now().getEpochSecond();
         while (!spotTrade.isNearBuyTime(currentUnixTimestamp, currencyPair)) {
-            Thread.sleep(4500); // sleep 4.5s
+            Thread.sleep(2000); // sleep 2s
             currentUnixTimestamp = Instant.now().getEpochSecond();
         }
 
@@ -56,9 +56,10 @@ public class Main {
         // Nếu mở bán thì status sẽ là tradable
         boolean isTradable = TradeStatusEnum.TRADABLE.equals(spotTrade.getTradeStatus(currencyPair));
         while (!isTradable) {
-            Thread.sleep(1); // max 900 requests/seconds -> retry every 1000ms/900 requests = 1ms
+            Thread.sleep(5); // max 900 requests/seconds -> retry every 1000ms/900 requests = 1ms
             isTradable = TradeStatusEnum.TRADABLE.equals(spotTrade.getTradeStatus(currencyPair));
         }
+        logger.info("is tradable !!!");
 
         // Thực hiện mua khi mở bán
         spotTrade.createBulkBuyOrder(currencyPair, buyAmounts, buyPrices);
@@ -67,7 +68,7 @@ public class Main {
         double availableBaseCurrency = spotTrade.getAvailableAmount(baseCurrency);
         while (availableBaseCurrency == 0) {
             // sleep vài ms để đợi khớp lệnh
-            Thread.sleep(1);
+            Thread.sleep(10);
             availableBaseCurrency = spotTrade.getAvailableAmount(baseCurrency);
         }
         List<String> sellAmounts = spotTrade.createSellAmounts(availableBaseCurrency, sellPrices,
