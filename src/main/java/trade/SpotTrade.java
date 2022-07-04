@@ -126,8 +126,8 @@ class SpotTrade {
                     + ", filled total: " + bo.getFilledTotal());
             if (bo.getSucceeded()) {
                 succeeded = true;
+                Main.HAS_SOLD = succeeded;
             }
-            Main.HAS_SOLD = succeeded;
         }
     }
 
@@ -158,13 +158,13 @@ class SpotTrade {
                     + ", filled total: " + bo.getFilledTotal());
             if (bo.getSucceeded()) {
                 succeeded = true;
+                Main.HAS_BOUGHT = succeeded;
             }
         }
-        Main.HAS_BOUGHT = succeeded;
     }
 
     public List<String> createBuyPrices(double lowestAsk, String pricePrecisionFormat) {
-        double multiplier = 1.5;
+        double multiplier = 1.3;
         List<String> buyPrices = new ArrayList<String>();
         for (int i = 0; i < this.buyIntervalNumber; i++) {
             buyPrices.add(String.format(pricePrecisionFormat, lowestAsk * multiplier));

@@ -28,7 +28,7 @@ public class MultiThreadTrade implements Runnable {
             // define trade pair
             logger.info("trade pair: " + currencyPair);
             String baseCurrency = currencyPair.split("_")[0]; // get base currency ETH/USDT -> base: ETH, quote: USDT
-            double totalFundInUsdt = 20.0;
+            double totalFundInUsdt = Main.USDT_FUND;
 
             int amountPrecision = spotTrade.getAmountPrecision(currencyPair);
             String amountPrecisionFormat = "%." + amountPrecision + "f";
@@ -64,6 +64,7 @@ public class MultiThreadTrade implements Runnable {
             // Thực hiện mua khi mở bán
             while(!Main.HAS_BOUGHT) {
                 spotTrade.createBulkBuyOrder(currencyPair, buyAmounts, buyPrices);
+                Thread.sleep(10);
             }
 
             // check số lượng token nếu > 0 sẽ sell = x3,5,7,9 giá lowestAsk

@@ -9,6 +9,7 @@ public class Main {
     public static volatile boolean IS_TRADABLE = false;
     public static volatile boolean HAS_BOUGHT = false;
     public static volatile boolean HAS_SOLD = false;
+    public static final double USDT_FUND = 20.0;
     
     private static final Logger logger = LogManager.getLogger(Main.class);
 
@@ -18,6 +19,7 @@ public class Main {
 
         // ****** WARNING: comment out this method after every run ******
         String currencyPair = args[0];
+//        String currencyPair = "TIFI_USDT";
         MultiThreadTrade t1 = new MultiThreadTrade("https://54.249.10.54/api/v4", currencyPair, spotTrade);
         MultiThreadTrade t2 = new MultiThreadTrade("https://54.65.90.250/api/v4", currencyPair, spotTrade);
         MultiThreadTrade t3 = new MultiThreadTrade("https://52.194.32.54/api/v4", currencyPair, spotTrade);
