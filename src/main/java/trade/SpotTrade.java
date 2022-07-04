@@ -160,7 +160,7 @@ class SpotTrade {
     }
 
     public List<String> createBuyPrices(double lowestAsk, String pricePrecisionFormat) {
-        double multiplier = 1.5;
+        double multiplier = 1.3;
         List<String> buyPrices = new ArrayList<String>();
         for (int i = 0; i < this.buyIntervalNumber; i++) {
             buyPrices.add(String.format(pricePrecisionFormat, lowestAsk * multiplier));
