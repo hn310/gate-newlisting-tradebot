@@ -21,6 +21,7 @@ import io.gate.gateapi.models.Ticker;
 
 class SpotTrade {
     private static final Logger logger = LogManager.getLogger(SpotTrade.class);
+    ApiClient client;
 
     private SpotApi spotApi;
     private int buyIntervalNumber = 2; // divide fund into n equal orders
@@ -30,9 +31,9 @@ class SpotTrade {
 
     public SpotTrade() {
         // Initialize API client
-        ApiClient client = new ApiClient();
-        client.setApiKeySecret(Config.API_KEY, Config.API_SECRET);
-        client.setBasePath("https://52.198.110.169/api/v4");
+        this.client = new ApiClient();
+        this.client.setApiKeySecret(Config.API_KEY, Config.API_SECRET);
+        this.client.setBasePath("https://52.198.110.169/api/v4");
         this.spotApi = new SpotApi(client);
     }
 
@@ -49,6 +50,7 @@ class SpotTrade {
             }
         }
         System.out.println("Finish printUpcomingListing()!!");
+        logger.info("Finish printUpcomingListing()!!");
         System.exit(0);
     }
 
@@ -116,15 +118,16 @@ class SpotTrade {
         }
         logger.info("current time before creating bulk sell requests: " + currentUnixTimestamp);
         List<BatchOrder> batchOrders = this.spotApi.createBatchOrders(orders);
+        boolean succeeded = false;
         for (BatchOrder bo : batchOrders) {
-            logger.info("side: " + bo.getSide() + 
-                    ", text: " + bo.getText() + 
-                    ", succeeded: " + bo.getSucceeded() + 
-                    ", label: " + bo.getLabel() + 
-                    ", message: " + bo.getMessage() + 
-                    ", create_time_ms: " + bo.getCreateTimeMs() + 
-                    ", amount: " + bo.getAmount() + ", price: " + bo.getPrice() + 
-                    ", filled total: " + bo.getFilledTotal());
+            logger.info("side: " + bo.getSide() + ", text: " + bo.getText() + ", succeeded: " + bo.getSucceeded()
+                    + ", label: " + bo.getLabel() + ", message: " + bo.getMessage() + ", create_time_ms: "
+                    + bo.getCreateTimeMs() + ", amount: " + bo.getAmount() + ", price: " + bo.getPrice()
+                    + ", filled total: " + bo.getFilledTotal());
+            if (bo.getSucceeded()) {
+                succeeded = true;
+            }
+            Main.HAS_SOLD = succeeded;
         }
     }
 
@@ -147,16 +150,17 @@ class SpotTrade {
         }
         logger.info("current time before creating bulk buy requests: " + currentUnixTimestamp);
         List<BatchOrder> batchOrders = this.spotApi.createBatchOrders(orders);
+        boolean succeeded = false;
         for (BatchOrder bo : batchOrders) {
-            logger.info("side: " + bo.getSide() + 
-                    ", text: " + bo.getText() + 
-                    ", succeeded: " + bo.getSucceeded() + 
-                    ", label: " + bo.getLabel() + 
-                    ", message: " + bo.getMessage() + 
-                    ", create_time_ms: " + bo.getCreateTimeMs() + 
-                    ", amount: " + bo.getAmount() + ", price: " + bo.getPrice() + 
-                    ", filled total: " + bo.getFilledTotal());
+            logger.info("side: " + bo.getSide() + ", text: " + bo.getText() + ", succeeded: " + bo.getSucceeded()
+                    + ", label: " + bo.getLabel() + ", message: " + bo.getMessage() + ", create_time_ms: "
+                    + bo.getCreateTimeMs() + ", amount: " + bo.getAmount() + ", price: " + bo.getPrice()
+                    + ", filled total: " + bo.getFilledTotal());
+            if (bo.getSucceeded()) {
+                succeeded = true;
+            }
         }
+        Main.HAS_BOUGHT = succeeded;
     }
 
     public List<String> createBuyPrices(double lowestAsk, String pricePrecisionFormat) {
@@ -221,5 +225,10 @@ class SpotTrade {
     public double getAvailableAmount(String baseCurrency) throws ApiException {
         List<SpotAccount> accounts = spotApi.listSpotAccounts().currency(baseCurrency).execute();
         return Double.parseDouble(accounts.get(0).getAvailable());
+    }
+
+    public void setBasePath(String basePath) {
+        this.client.setBasePath(basePath);
+        this.spotApi = new SpotApi(this.client);
     }
 }
