@@ -99,67 +99,63 @@ class SpotTrade {
         this.spotApi.createOrder(order);
     }
 
-    public void createBulkSellOrder(String currencyPair, List<String> sellAmounts, List<String> sellPrices)
-            throws ApiException {
-        long currentUnixTimestamp = Instant.now().getEpochSecond();
-        List<Order> orders = new ArrayList<Order>();
-        for (int i = 0; i < sellAmounts.size(); i++) {
-            Order order = new Order();
-            order.setText("t-" + currentUnixTimestamp + "-" + i);
-            order.setAccount(Order.AccountEnum.SPOT);
-            order.setAutoBorrow(false);
-            order.setTimeInForce(Order.TimeInForceEnum.GTC);
-            order.setType(Order.TypeEnum.LIMIT);
-            order.setAmount(sellAmounts.get(i));
-            order.setPrice(sellPrices.get(i));
-            order.setSide(Order.SideEnum.SELL);
-            order.setCurrencyPair(currencyPair);
-            orders.add(order);
-        }
-        logger.info("current time before creating bulk sell requests: " + currentUnixTimestamp);
-        List<BatchOrder> batchOrders = this.spotApi.createBatchOrders(orders);
-        boolean succeeded = false;
-        for (BatchOrder bo : batchOrders) {
-            logger.info("side: " + bo.getSide() + ", text: " + bo.getText() + ", succeeded: " + bo.getSucceeded()
-                    + ", label: " + bo.getLabel() + ", message: " + bo.getMessage() + ", create_time_ms: "
-                    + bo.getCreateTimeMs() + ", amount: " + bo.getAmount() + ", price: " + bo.getPrice()
-                    + ", filled total: " + bo.getFilledTotal());
-            if (bo.getSucceeded()) {
-                succeeded = true;
-                Main.HAS_SOLD = succeeded;
+    public void createBulkSellOrder(String currencyPair, List<String> sellAmounts, List<String> sellPrices) {
+        try {
+            long currentUnixTimestamp = Instant.now().getEpochSecond();
+            List<Order> orders = new ArrayList<Order>();
+            for (int i = 0; i < sellAmounts.size(); i++) {
+                Order order = new Order();
+                order.setText("t-" + currentUnixTimestamp + "-" + i);
+                order.setAccount(Order.AccountEnum.SPOT);
+                order.setAutoBorrow(false);
+                order.setTimeInForce(Order.TimeInForceEnum.GTC);
+                order.setType(Order.TypeEnum.LIMIT);
+                order.setAmount(sellAmounts.get(i));
+                order.setPrice(sellPrices.get(i));
+                order.setSide(Order.SideEnum.SELL);
+                order.setCurrencyPair(currencyPair);
+                orders.add(order);
             }
+            logger.info("current time before creating bulk sell requests: " + currentUnixTimestamp);
+            List<BatchOrder> batchOrders = this.spotApi.createBatchOrders(orders);
+            for (BatchOrder bo : batchOrders) {
+                logger.info("side: " + bo.getSide() + ", text: " + bo.getText() + ", succeeded: " + bo.getSucceeded()
+                        + ", label: " + bo.getLabel() + ", message: " + bo.getMessage() + ", create_time_ms: "
+                        + bo.getCreateTimeMs() + ", amount: " + bo.getAmount() + ", price: " + bo.getPrice()
+                        + ", filled price: " + bo.getFillPrice() + ", filled total: " + bo.getFilledTotal());
+            }
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
         }
     }
 
-    public void createBulkBuyOrder(String currencyPair, List<String> buyAmounts, List<String> buyPrices)
-            throws ApiException {
-        long currentUnixTimestamp = Instant.now().getEpochSecond();
-        List<Order> orders = new ArrayList<Order>();
-        for (int i = 0; i < buyAmounts.size(); i++) {
-            Order order = new Order();
-            order.setText("t-" + currentUnixTimestamp + "-" + i);
-            order.setAccount(Order.AccountEnum.SPOT);
-            order.setAutoBorrow(false);
-            order.setTimeInForce(Order.TimeInForceEnum.GTC);
-            order.setType(Order.TypeEnum.LIMIT);
-            order.setAmount(buyAmounts.get(i));
-            order.setPrice(buyPrices.get(i));
-            order.setSide(Order.SideEnum.BUY);
-            order.setCurrencyPair(currencyPair);
-            orders.add(order);
-        }
-        logger.info("current time before creating bulk buy requests: " + currentUnixTimestamp);
-        List<BatchOrder> batchOrders = this.spotApi.createBatchOrders(orders);
-        boolean succeeded = false;
-        for (BatchOrder bo : batchOrders) {
-            logger.info("side: " + bo.getSide() + ", text: " + bo.getText() + ", succeeded: " + bo.getSucceeded()
-                    + ", label: " + bo.getLabel() + ", message: " + bo.getMessage() + ", create_time_ms: "
-                    + bo.getCreateTimeMs() + ", amount: " + bo.getAmount() + ", price: " + bo.getPrice()
-                    + ", filled total: " + bo.getFilledTotal());
-            if (bo.getSucceeded()) {
-                succeeded = true;
-                Main.HAS_BOUGHT = succeeded;
+    public void createBulkBuyOrder(String currencyPair, List<String> buyAmounts, List<String> buyPrices) {
+        try {
+            long currentUnixTimestamp = Instant.now().getEpochSecond();
+            List<Order> orders = new ArrayList<Order>();
+            for (int i = 0; i < buyAmounts.size(); i++) {
+                Order order = new Order();
+                order.setText("t-" + currentUnixTimestamp + "-" + i);
+                order.setAccount(Order.AccountEnum.SPOT);
+                order.setAutoBorrow(false);
+                order.setTimeInForce(Order.TimeInForceEnum.GTC);
+                order.setType(Order.TypeEnum.LIMIT);
+                order.setAmount(buyAmounts.get(i));
+                order.setPrice(buyPrices.get(i));
+                order.setSide(Order.SideEnum.BUY);
+                order.setCurrencyPair(currencyPair);
+                orders.add(order);
             }
+            logger.info("current time before creating bulk buy requests: " + currentUnixTimestamp);
+            List<BatchOrder> batchOrders = this.spotApi.createBatchOrders(orders);
+            for (BatchOrder bo : batchOrders) {
+                logger.info("side: " + bo.getSide() + ", text: " + bo.getText() + ", succeeded: " + bo.getSucceeded()
+                        + ", label: " + bo.getLabel() + ", message: " + bo.getMessage() + ", create_time_ms: "
+                        + bo.getCreateTimeMs() + ", amount: " + bo.getAmount() + ", price: " + bo.getPrice()
+                        + ", filled price: " + bo.getFillPrice() + ", filled total: " + bo.getFilledTotal());
+            }
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
         }
     }
 
@@ -230,5 +226,10 @@ class SpotTrade {
     public void setBasePath(String basePath) {
         this.client.setBasePath(basePath);
         this.spotApi = new SpotApi(this.client);
+    }
+
+    public double getAvailableUsdt() throws ApiException {
+        List<SpotAccount> accounts = this.spotApi.listSpotAccounts().currency("USDT").execute();
+        return Double.parseDouble(accounts.get(0).getAvailable());
     }
 }

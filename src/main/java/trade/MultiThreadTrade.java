@@ -6,8 +6,6 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import io.gate.gateapi.models.CurrencyPair.TradeStatusEnum;
-
 public class MultiThreadTrade implements Runnable {
     private static final Logger logger = LogManager.getLogger(MultiThreadTrade.class);
 
@@ -54,20 +52,19 @@ public class MultiThreadTrade implements Runnable {
             List<String> sellPrices = spotTrade.createSellPrices(lowestAsk, pricePrecisionFormat);
             logger.info("sellPrices: " + String.join(", ", sellPrices));
 
-            // Nếu mở bán thì status sẽ là tradable
-            while (!Main.IS_TRADABLE) {
-                Thread.sleep(5); // max 900 requests/seconds -> retry every 1000ms/900 requests = 1ms
-                Main.IS_TRADABLE = TradeStatusEnum.TRADABLE.equals(spotTrade.getTradeStatus(currencyPair));
+            // Thực hiện spam mua trước khi mở bán 2s
+            long buyStartTime = spotTrade.getBuyStartTime(currencyPair);
+            boolean isBuyTime = false;
+            while (!isBuyTime) {
+                if (Instant.now().getEpochSecond() >= (buyStartTime - 2)) {
+                    isBuyTime = true;
+                    while (spotTrade.getAvailableUsdt() >= Main.USDT_FUND) {
+                        spotTrade.createBulkBuyOrder(currencyPair, buyAmounts, buyPrices);
+                    }
+                }
             }
-            logger.info("is tradable !!!");
 
-            // Thực hiện mua khi mở bán
-            while(!Main.HAS_BOUGHT) {
-                spotTrade.createBulkBuyOrder(currencyPair, buyAmounts, buyPrices);
-                Thread.sleep(10);
-            }
-
-            // check số lượng token nếu > 0 sẽ sell = x3,5,7,9 giá lowestAsk
+            // check số lượng token nếu > 0 sẽ sell = x3,5 giá lowestAsk
             double availableBaseCurrency = spotTrade.getAvailableAmount(baseCurrency);
             while (availableBaseCurrency == 0) {
                 // sleep vài ms để đợi khớp lệnh
