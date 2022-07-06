@@ -24,10 +24,8 @@ class SpotTrade {
     ApiClient client;
 
     private SpotApi spotApi;
-    private int buyIntervalNumber = 2; // divide fund into n equal orders
-    private double buyMultiplier = 0.5;
-    private int sellIntervalNumber = 2; // x3, x5
-    private double sellMultiplier = 2;
+    private double[] buyMultipliers = {1.5, 2.0};
+    private double[] sellMultipliers = {3.0, 5.0};
 
     public SpotTrade() {
         // Initialize API client
@@ -160,39 +158,35 @@ class SpotTrade {
     }
 
     public List<String> createBuyPrices(double lowestAsk, String pricePrecisionFormat) {
-        double multiplier = 1.3;
         List<String> buyPrices = new ArrayList<String>();
-        for (int i = 0; i < this.buyIntervalNumber; i++) {
+        for (double multiplier : buyMultipliers) {
             buyPrices.add(String.format(pricePrecisionFormat, lowestAsk * multiplier));
-            multiplier += this.buyMultiplier;
         }
         return buyPrices;
     }
 
     public List<String> createBuyAmounts(double totalFundInUsdt, List<String> buyPrices, String amountPrecisionFormat) {
-        double tradeAmount = totalFundInUsdt / this.buyIntervalNumber;
+        double tradeAmount = totalFundInUsdt / this.buyMultipliers.length;
         List<String> buyAmounts = new ArrayList<String>();
-        for (int i = 0; i < this.buyIntervalNumber; i++) {
+        for (int i = 0; i < this.buyMultipliers.length; i++) {
             buyAmounts.add(String.format(amountPrecisionFormat, tradeAmount / Double.parseDouble(buyPrices.get(i))));
         }
         return buyAmounts;
     }
 
     public List<String> createSellPrices(double lowestAsk, String pricePrecisionFormat) {
-        double multiplier = 3.0;
         List<String> sellPrices = new ArrayList<String>();
-        for (int i = 0; i < this.sellIntervalNumber; i++) {
-            sellPrices.add(String.format(pricePrecisionFormat, lowestAsk * multiplier));
-            multiplier += this.sellMultiplier;
+        for (double sellMultiplier : this.sellMultipliers) {
+            sellPrices.add(String.format(pricePrecisionFormat, lowestAsk * sellMultiplier));
         }
         return sellPrices;
     }
 
     public List<String> createSellAmounts(double availableBaseCurrency, List<String> sellPrices,
             String amountPrecisionFormat) {
-        double tradeAmount = availableBaseCurrency / this.sellIntervalNumber;
+        double tradeAmount = availableBaseCurrency / this.sellMultipliers.length;
         List<String> sellAmounts = new ArrayList<String>();
-        for (int i = 0; i < this.sellIntervalNumber; i++) {
+        for (int i = 0; i < this.sellMultipliers.length; i++) {
             sellAmounts.add(String.format(amountPrecisionFormat, tradeAmount / Double.parseDouble(sellPrices.get(i))));
         }
         return sellAmounts;

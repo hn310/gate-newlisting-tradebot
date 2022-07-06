@@ -34,10 +34,9 @@ public class MultiThreadTrade implements Runnable {
             String pricePrecisionFormat = "%." + pricePrecision + "f";
 
             // Đợi đến trước khi mở bán tầm 5s để biết giá ask thấp nhất
-            long currentUnixTimestamp = Instant.now().getEpochSecond();
-            while (!spotTrade.isNearBuyTime(currentUnixTimestamp, currencyPair)) {
+            long buyStartTime = spotTrade.getBuyStartTime(currencyPair);
+            while (Instant.now().getEpochSecond() < (buyStartTime - 5)) {
                 Thread.sleep(2000); // sleep 2s
-                currentUnixTimestamp = Instant.now().getEpochSecond();
             }
 
             // It's buy time !!!
@@ -53,7 +52,6 @@ public class MultiThreadTrade implements Runnable {
             logger.info("sellPrices: " + String.join(", ", sellPrices));
 
             // Thực hiện spam mua trước khi mở bán 2s
-            long buyStartTime = spotTrade.getBuyStartTime(currencyPair);
             boolean isBuyTime = false;
             while (!isBuyTime) {
                 if (Instant.now().getEpochSecond() >= (buyStartTime - 2)) {
