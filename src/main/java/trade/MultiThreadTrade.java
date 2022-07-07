@@ -1,13 +1,15 @@
 package trade;
 
 import java.time.Instant;
-import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class MultiThreadTrade implements Runnable {
     private static final Logger logger = LogManager.getLogger(MultiThreadTrade.class);
+
+    private static final double buyMultiplier = 2.5;
+    private static final double sellMultiplier = 4;
 
     private SpotTrade spotTrade;
     private String currencyPair;
@@ -26,7 +28,6 @@ public class MultiThreadTrade implements Runnable {
             // define trade pair
             logger.info("trade pair: " + currencyPair);
             String baseCurrency = currencyPair.split("_")[0]; // get base currency ETH/USDT -> base: ETH, quote: USDT
-            double totalFundInUsdt = Main.USDT_FUND;
 
             int amountPrecision = spotTrade.getAmountPrecision(currencyPair);
             String amountPrecisionFormat = "%." + amountPrecision + "f";
@@ -44,21 +45,21 @@ public class MultiThreadTrade implements Runnable {
             // bon chen thử đặt lệnh với giá thấp nhất, rồi sau đó lũy tiến dần
             double lowestAsk = spotTrade.getLowestAsk(currencyPair);
             logger.info("lowest ask: " + lowestAsk);
-            List<String> buyPrices = spotTrade.createBuyPrices(lowestAsk, pricePrecisionFormat);
-            logger.info("buyPrices: " + String.join(", ", buyPrices));
-            List<String> buyAmounts = spotTrade.createBuyAmounts(totalFundInUsdt, buyPrices, amountPrecisionFormat);
-            logger.info("buyAmounts: " + String.join(", ", buyAmounts));
-            List<String> sellPrices = spotTrade.createSellPrices(lowestAsk, pricePrecisionFormat);
-            logger.info("sellPrices: " + String.join(", ", sellPrices));
+            String buyPrice = String.format(pricePrecisionFormat, lowestAsk * buyMultiplier);
+            logger.info("buyPrice: " + buyPrice);
+            String buyAmount = String.format(amountPrecisionFormat, Main.USDT_FUND / Double.parseDouble(buyPrice));
+            logger.info("buyAmount: " + buyAmount);
+            String sellPrice = String.format(pricePrecisionFormat, lowestAsk * sellMultiplier);
+            logger.info("sellPrice: " + sellPrice);
 
-            // Thực hiện spam mua trước khi mở bán 2s
+            // Thực hiện spam mua trước khi mở bán 1s
             boolean isBuyTime = false;
             while (!isBuyTime) {
                 if (Instant.now().getEpochSecond() >= (buyStartTime - 2)) {
                     isBuyTime = true;
                     while (spotTrade.getAvailableUsdt() >= Main.USDT_FUND) {
-                    	Thread.sleep(20);
-                        spotTrade.createBulkBuyOrder(currencyPair, buyAmounts, buyPrices);
+                        Thread.sleep(20);
+                        spotTrade.createBuyOrder(currencyPair, buyAmount, buyPrice);
                     }
                 }
             }
@@ -71,10 +72,10 @@ public class MultiThreadTrade implements Runnable {
                 Thread.sleep(20);
                 availableBaseCurrency = spotTrade.getAvailableAmount(baseCurrency);
             }
-            List<String> sellAmounts = spotTrade.createSellAmounts(availableBaseCurrency, sellPrices,
-                    amountPrecisionFormat);
-            spotTrade.createBulkSellOrder(currencyPair, sellAmounts, sellPrices);
-            logger.info("sellAmounts: " + String.join(", ", sellAmounts));
+
+            spotTrade.createSellOrder(currencyPair, String.format(amountPrecisionFormat, availableBaseCurrency),
+                    sellPrice);
+            logger.info("availableBaseCurrency: " + availableBaseCurrency);
             logger.info("Finish startTrade()");
         } catch (Exception e) {
             logger.error(e.getMessage(), e);

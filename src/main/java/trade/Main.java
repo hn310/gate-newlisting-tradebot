@@ -17,11 +17,14 @@ public class Main {
 
         // ****** WARNING: comment out this method after every run ******
         String currencyPair = args[0];
-//        String currencyPair = "SRT_USDT";
+//        String currencyPair = "XDB_USDT";
 
         for (String ip : IPs) {
             MultiThreadTrade t = new MultiThreadTrade(ip, currencyPair, spotTrade);
             new Thread(t).start();
         }
+        
+//        MultiThreadTrade t = new MultiThreadTrade(IPs[0], currencyPair, spotTrade);
+//        new Thread(t).start();
     }
 }

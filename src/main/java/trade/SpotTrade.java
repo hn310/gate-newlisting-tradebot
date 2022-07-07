@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 
 import io.gate.gateapi.ApiClient;
 import io.gate.gateapi.ApiException;
+import io.gate.gateapi.GateApiException;
 import io.gate.gateapi.api.SpotApi;
 import io.gate.gateapi.models.BatchOrder;
 import io.gate.gateapi.models.CurrencyPair;
@@ -24,8 +25,8 @@ class SpotTrade {
     ApiClient client;
 
     private SpotApi spotApi;
-    private double[] buyMultipliers = {2.0, 2.5};
-    private double[] sellMultipliers = {3.5, 4.5};
+    private double[] buyMultipliers = { 2.0, 2.5 };
+    private double[] sellMultipliers = { 3.5, 4.5 };
 
     public SpotTrade() {
         // Initialize API client
@@ -72,29 +73,62 @@ class SpotTrade {
     }
 
     public void createSellOrder(String currencyPair, String sellAmount, String sellPrice) throws ApiException {
-        Order order = new Order();
-        order.setAccount(Order.AccountEnum.SPOT);
-        order.setAutoBorrow(false);
-        order.setTimeInForce(Order.TimeInForceEnum.GTC);
-        order.setType(Order.TypeEnum.LIMIT);
-        order.setAmount(sellAmount);
-        order.setPrice(sellPrice);
-        order.setSide(Order.SideEnum.SELL);
-        order.setCurrencyPair(currencyPair);
-        this.spotApi.createOrder(order);
+        do {
+            try {
+                Order order = new Order();
+                order.setAccount(Order.AccountEnum.SPOT);
+                order.setAutoBorrow(false);
+                order.setTimeInForce(Order.TimeInForceEnum.GTC);
+                order.setType(Order.TypeEnum.LIMIT);
+                order.setAmount(sellAmount);
+                order.setPrice(sellPrice);
+                order.setSide(Order.SideEnum.SELL);
+                order.setCurrencyPair(currencyPair);
+                this.spotApi.createOrder(order);
+                Order result = this.spotApi.createOrder(order);
+
+                logger.info("side: " + result.getSide() + ", create_time_ms: " + result.getCreateTimeMs() + ", amount: "
+                        + result.getAmount() + ", price: " + result.getPrice() + ", filled price: "
+                        + result.getFillPrice() + ", filled total: " + result.getFilledTotal());
+            } catch (GateApiException gae) {
+                logger.error(gae.getMessage());
+                if (gae.getErrorLabel().equals("INVALID_CURRENCY")) {
+                    continue;
+                }
+            } catch (Exception e) {
+                logger.error(e.getMessage(), e);
+            }
+            break;
+        } while (true);
     }
 
-    public void createBuyOrder(String currencyPair, String buyAmount, String buyPrice) throws ApiException {
-        Order order = new Order();
-        order.setAccount(Order.AccountEnum.SPOT);
-        order.setAutoBorrow(false);
-        order.setTimeInForce(Order.TimeInForceEnum.GTC);
-        order.setType(Order.TypeEnum.LIMIT);
-        order.setAmount(buyAmount);
-        order.setPrice(buyPrice);
-        order.setSide(Order.SideEnum.BUY);
-        order.setCurrencyPair(currencyPair);
-        this.spotApi.createOrder(order);
+    public void createBuyOrder(String currencyPair, String buyAmount, String buyPrice) {
+        do {
+            try {
+                Order order = new Order();
+                order.setAccount(Order.AccountEnum.SPOT);
+                order.setAutoBorrow(false);
+                order.setTimeInForce(Order.TimeInForceEnum.GTC);
+                order.setType(Order.TypeEnum.LIMIT);
+                order.setAmount(buyAmount);
+                order.setPrice(buyPrice);
+                order.setSide(Order.SideEnum.BUY);
+                order.setCurrencyPair(currencyPair);
+                Order result = this.spotApi.createOrder(order);
+
+                logger.info("side: " + result.getSide() + ", create_time_ms: " + result.getCreateTimeMs() + ", amount: "
+                        + result.getAmount() + ", price: " + result.getPrice() + ", filled price: "
+                        + result.getFillPrice() + ", filled total: " + result.getFilledTotal());
+            } catch (GateApiException gae) {
+                logger.error(gae.getMessage());
+                if (gae.getErrorLabel().equals("INVALID_CURRENCY")) {
+                    continue;
+                }
+            } catch (Exception e) {
+                logger.error(e.getMessage(), e);
+            }
+            break;
+        } while (true);
     }
 
     public void createBulkSellOrder(String currencyPair, List<String> sellAmounts, List<String> sellPrices) {
