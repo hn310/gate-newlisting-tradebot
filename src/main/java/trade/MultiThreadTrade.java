@@ -57,6 +57,7 @@ public class MultiThreadTrade implements Runnable {
                 if (Instant.now().getEpochSecond() >= (buyStartTime - 2)) {
                     isBuyTime = true;
                     while (spotTrade.getAvailableUsdt() >= Main.USDT_FUND) {
+                    	Thread.sleep(20);
                         spotTrade.createBulkBuyOrder(currencyPair, buyAmounts, buyPrices);
                     }
                 }
@@ -66,7 +67,7 @@ public class MultiThreadTrade implements Runnable {
             double availableBaseCurrency = spotTrade.getAvailableAmount(baseCurrency);
             while (availableBaseCurrency == 0) {
                 // sleep vài ms để đợi khớp lệnh
-                Thread.sleep(5);
+                Thread.sleep(20);
                 availableBaseCurrency = spotTrade.getAvailableAmount(baseCurrency);
             }
             List<String> sellAmounts = spotTrade.createSellAmounts(availableBaseCurrency, sellPrices,

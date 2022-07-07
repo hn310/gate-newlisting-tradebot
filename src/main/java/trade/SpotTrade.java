@@ -24,8 +24,8 @@ class SpotTrade {
     ApiClient client;
 
     private SpotApi spotApi;
-    private double[] buyMultipliers = {1.5, 2.0};
-    private double[] sellMultipliers = {3.0, 5.0};
+    private double[] buyMultipliers = {2.0, 2.5};
+    private double[] sellMultipliers = {3.5, 4.5};
 
     public SpotTrade() {
         // Initialize API client
