@@ -63,6 +63,7 @@ public class MultiThreadTrade implements Runnable {
                 }
             }
 
+            logger.info("Finished buy, start sell");
             // check số lượng token nếu > 0 sẽ sell = x3,5 giá lowestAsk
             double availableBaseCurrency = spotTrade.getAvailableAmount(baseCurrency);
             while (availableBaseCurrency == 0) {
