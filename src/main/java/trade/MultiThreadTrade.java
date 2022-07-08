@@ -55,11 +55,11 @@ public class MultiThreadTrade implements Runnable {
             // Thực hiện spam mua trước khi mở bán 1s
             boolean isBuyTime = false;
             while (!isBuyTime) {
-                if (Instant.now().getEpochSecond() >= (buyStartTime - 2)) {
+                if (Instant.now().getEpochSecond() >= (buyStartTime - 1)) {
                     isBuyTime = true;
                     while (spotTrade.getAvailableUsdt() >= Main.USDT_FUND) {
-                        Thread.sleep(20);
                         spotTrade.createBuyOrder(currencyPair, buyAmount, buyPrice);
+                        Thread.sleep(50);
                     }
                 }
             }
