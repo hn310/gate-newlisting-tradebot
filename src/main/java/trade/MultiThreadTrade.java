@@ -35,8 +35,8 @@ public class MultiThreadTrade implements Runnable {
             String pricePrecisionFormat = "%." + pricePrecision + "f";
 
             // Đợi đến trước khi mở bán tầm 5s để biết giá ask thấp nhất
-            long buyStartTime = spotTrade.getBuyStartTime(currencyPair);
-            while (Instant.now().getEpochSecond() < (buyStartTime - 5)) {
+            long buyStartTimeInMillis = spotTrade.getBuyStartTime(currencyPair);
+            while (Instant.now().toEpochMilli() < (buyStartTimeInMillis - 5000)) {
                 Thread.sleep(2000); // sleep 2s
             }
 
@@ -52,10 +52,10 @@ public class MultiThreadTrade implements Runnable {
             String sellPrice = String.format(pricePrecisionFormat, lowestAsk * sellMultiplier);
             logger.info("sellPrice: " + sellPrice);
 
-            // Thực hiện spam mua trước khi mở bán 1s
+            // Thực hiện spam mua trước khi mở bán 200ms
             boolean isBuyTime = false;
             while (!isBuyTime) {
-                if (Instant.now().getEpochSecond() >= (buyStartTime - 1)) {
+                if (Instant.now().toEpochMilli() >= (buyStartTimeInMillis - 200)) {
                     isBuyTime = true;
                     while (spotTrade.getAvailableUsdt() >= Main.USDT_FUND) {
                         spotTrade.createBuyOrder(currencyPair, buyAmount, buyPrice);

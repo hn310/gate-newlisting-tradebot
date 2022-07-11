@@ -69,7 +69,8 @@ class SpotTrade {
     }
 
     public long getBuyStartTime(String currencyPair) throws ApiException {
-        return spotApi.getCurrencyPair(currencyPair).getBuyStart();
+    	// convert seconds to milliseconds
+        return spotApi.getCurrencyPair(currencyPair).getBuyStart()*1000;
     }
 
     public void createSellOrder(String currencyPair, String sellAmount, String sellPrice) throws ApiException {
@@ -133,7 +134,7 @@ class SpotTrade {
 
     public void createBulkSellOrder(String currencyPair, List<String> sellAmounts, List<String> sellPrices) {
         try {
-            long currentUnixTimestamp = Instant.now().getEpochSecond();
+            long currentUnixTimestamp = Instant.now().toEpochMilli();
             List<Order> orders = new ArrayList<Order>();
             for (int i = 0; i < sellAmounts.size(); i++) {
                 Order order = new Order();
@@ -163,7 +164,7 @@ class SpotTrade {
 
     public void createBulkBuyOrder(String currencyPair, List<String> buyAmounts, List<String> buyPrices) {
         try {
-            long currentUnixTimestamp = Instant.now().getEpochSecond();
+            long currentUnixTimestamp = Instant.now().toEpochMilli();
             List<Order> orders = new ArrayList<Order>();
             for (int i = 0; i < buyAmounts.size(); i++) {
                 Order order = new Order();
@@ -229,13 +230,6 @@ class SpotTrade {
     public TradeStatusEnum getTradeStatus(String currencyPair) throws InterruptedException, ApiException {
         TradeStatusEnum currentTradeStatus = this.spotApi.getCurrencyPair(currencyPair).getTradeStatus();
         return currentTradeStatus;
-    }
-
-    public boolean isNearBuyTime(long currentUnixTimestamp, String currencyPair) throws ApiException {
-        long tokenBuyStartTime = getBuyStartTime(currencyPair);
-        boolean isJustBeforeBuyStartTime = currentUnixTimestamp > (tokenBuyStartTime - 5); // 5s before buy start time
-        boolean isAfterStartBuyTime = currentUnixTimestamp < (tokenBuyStartTime + 60); // < 60s after buy start time
-        return isJustBeforeBuyStartTime && isAfterStartBuyTime;
     }
 
     public int getAmountPrecision(String currencyPair) throws ApiException {
