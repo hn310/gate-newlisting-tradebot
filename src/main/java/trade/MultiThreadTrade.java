@@ -1,6 +1,8 @@
 package trade;
 
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -58,7 +60,13 @@ public class MultiThreadTrade implements Runnable {
                 if (Instant.now().toEpochMilli() >= (buyStartTimeInMillis - 200)) {
                     isBuyTime = true;
                     while (spotTrade.getAvailableUsdt() >= Main.USDT_FUND) {
-                        spotTrade.createBuyOrder(currencyPair, buyAmount, buyPrice);
+                        // single buy order
+//                        spotTrade.createBuyOrder(currencyPair, buyAmount, buyPrice);
+
+                        // bulk buy order
+                        List<String> buyAmounts = Arrays.asList(buyAmount, buyAmount, buyAmount);
+                        List<String> buyPrices = Arrays.asList(buyPrice, buyPrice, buyPrice);
+                        spotTrade.createBulkBuyOrder(currencyPair, buyAmounts, buyPrices);
                         Thread.sleep(50);
                     }
                 }
@@ -73,8 +81,15 @@ public class MultiThreadTrade implements Runnable {
                 availableBaseCurrency = spotTrade.getAvailableAmount(baseCurrency);
             }
 
-            spotTrade.createSellOrder(currencyPair, String.format(amountPrecisionFormat, availableBaseCurrency),
-                    sellPrice);
+            // single sell order
+//            spotTrade.createSellOrder(currencyPair, String.format(amountPrecisionFormat, availableBaseCurrency),
+//                    sellPrice);
+
+            // bulk sell order
+            String sellAmount = String.format(amountPrecisionFormat, availableBaseCurrency);
+            List<String> sellAmounts = Arrays.asList(sellAmount, sellAmount, sellAmount);
+            List<String> sellPrices = Arrays.asList(sellPrice, sellPrice, sellPrice);
+            spotTrade.createBulkSellOrder(currencyPair, sellAmounts, sellPrices);
             logger.info("availableBaseCurrency: " + availableBaseCurrency);
             logger.info("Finish startTrade()");
         } catch (Exception e) {
